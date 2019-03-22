@@ -6,36 +6,28 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-type DBConfig struct {
-	Host     string `json:"Host"`
-	User     string `json:"user"`
-	Password string `json:"password"`
-	DbName   string `json:"dbName"`
-	Timeout  string `json:"timeout"`
-}
-
-type DB struct {
+type DBQuery struct {
 	dsn string
 	db  *sql.DB
 }
 
-func NewDB(config *DBConfig) *DB {
+func NewDBQuery(config *DBConfig) *DBQuery {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=%s", config.User, config.Password, config.Host, config.DbName, config.Timeout)
-	d := &DB{
+	d := &DBQuery{
 		dsn,
 		nil,
 	}
 	return d
 }
 
-func (d *DB) Open() (err error) {
+func (d *DBQuery) Open() (err error) {
 	if d.db == nil || d.db.Ping() != nil {
 		d.db, err = sql.Open("mysql", d.dsn)
 	}
 	return
 }
 
-func (d *DB) Query(query string, values ...interface{}) (*sql.Rows, error) {
+func (d *DBQuery) Query(query string, values ...interface{}) (*sql.Rows, error) {
 	err := d.Open()
 	if err != nil {
 		return nil, err
@@ -47,7 +39,7 @@ func (d *DB) Query(query string, values ...interface{}) (*sql.Rows, error) {
 	return rows, nil
 }
 
-func (d *DB) Exec(querySql string, values ...interface{}) (int64, error) {
+func (d *DBQuery) Exec(querySql string, values ...interface{}) (int64, error) {
 	err := d.Open()
 	if err != nil {
 		return 0, err
