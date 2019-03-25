@@ -39,12 +39,12 @@ func (d *DBQuery) Query(query string, values ...interface{}) (*sql.Rows, error) 
 	return rows, nil
 }
 
-func (d *DBQuery) Exec(querySql string, values ...interface{}) (int64, error) {
+func (d *DBQuery) Exec(query string, values ...interface{}) (int64, error) {
 	err := d.Open()
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := d.db.Prepare(querySql)
+	stmt, err := d.db.Prepare(query)
 	if err != nil {
 		return 0, err
 	}
