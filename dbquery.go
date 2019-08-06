@@ -39,6 +39,34 @@ func (d *DBQuery) Query(query string, values ...interface{}) (*sql.Rows, error) 
 	return rows, nil
 }
 
+func (d *DBQuery) Fetch(rows *sql.Rows) ([]map[string]interface{}, error) {
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+	var list []map[string]interface{}
+	values := make([]interface{}, len(columns))
+	scanArgs := make([]interface{}, len(columns))
+	for i := range values{
+		scanArgs[i] = &values[i]
+	}
+	for rows.Next() {
+		row := make(map[string]interface{})
+		err = rows.Scan(scanArgs...)
+		if err != nil {
+			return nil, err
+		}
+		for i, col := range values {
+			row[columns[i]] = col
+		}
+		list = append(list, row)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return list, nil
+}
+
 func (d *DBQuery) Exec(query string, values ...interface{}) (int64, error) {
 	err := d.Open()
 	if err != nil {
