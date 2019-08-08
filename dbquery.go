@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"log"
+	"strconv"
 )
 
 type DBQuery struct {
@@ -39,25 +41,36 @@ func (d *DBQuery) Query(query string, values ...interface{}) (*sql.Rows, error) 
 	return rows, nil
 }
 
-func (d *DBQuery) Fetch(rows *sql.Rows) ([]map[string]interface{}, error) {
+func (d *DB) Fetch(rows *sql.Rows) ([]map[string]string, error) {
 	columns, err := rows.Columns()
 	if err != nil {
 		return nil, err
 	}
-	var list []map[string]interface{}
+	var list []map[string]string
 	values := make([]interface{}, len(columns))
 	scanArgs := make([]interface{}, len(columns))
-	for i := range values{
+	for i := range values {
 		scanArgs[i] = &values[i]
 	}
 	for rows.Next() {
-		row := make(map[string]interface{})
+		row := make(map[string]string)
 		err = rows.Scan(scanArgs...)
 		if err != nil {
 			return nil, err
 		}
 		for i, col := range values {
-			row[columns[i]] = col
+			var value string
+			switch val := col.(type) {
+			case []uint8:
+				value = string(val)
+			case int64:
+				value = strconv.Itoa(int(val))
+			case nil:
+				value = ""
+			default:
+				fmt.Printf("unexpected type %T", value)
+			}
+			row[columns[i]] = value
 		}
 		list = append(list, row)
 	}
