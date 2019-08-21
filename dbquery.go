@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"log"
 	"strconv"
 )
 
@@ -41,7 +40,7 @@ func (d *DBQuery) Query(query string, values ...interface{}) (*sql.Rows, error) 
 	return rows, nil
 }
 
-func (d *DB) Fetch(rows *sql.Rows) ([]map[string]string, error) {
+func (d *DBQuery) Fetch(rows *sql.Rows) ([]map[string]string, error) {
 	columns, err := rows.Columns()
 	if err != nil {
 		return nil, err
