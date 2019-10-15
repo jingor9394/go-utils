@@ -2,33 +2,33 @@ package utils
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"strconv"
 )
 
-type DBQuery struct {
+type DB struct {
 	dsn string
 	db  *sql.DB
 }
 
-func NewDBQuery(config *DBConfig) *DBQuery {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?timeout=%s", config.User, config.Password, config.Host, config.DbName, config.Timeout)
-	d := &DBQuery{
+func NewDB(dsn string) *DB {
+	d := &DB{
 		dsn,
 		nil,
 	}
 	return d
 }
 
-func (d *DBQuery) Open() (err error) {
+func (d *DB) Open() (err error) {
 	if d.db == nil || d.db.Ping() != nil {
 		d.db, err = sql.Open("mysql", d.dsn)
 	}
 	return
 }
 
-func (d *DBQuery) Query(query string, values ...interface{}) (*sql.Rows, error) {
+func (d *DB) Query(query string, values ...interface{}) (*sql.Rows, error) {
 	err := d.Open()
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (d *DBQuery) Query(query string, values ...interface{}) (*sql.Rows, error) 
 	return rows, nil
 }
 
-func (d *DBQuery) Fetch(rows *sql.Rows) ([]map[string]string, error) {
+func (d *DB) Fetch(rows *sql.Rows) ([]map[string]string, error) {
 	columns, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -67,7 +67,8 @@ func (d *DBQuery) Fetch(rows *sql.Rows) ([]map[string]string, error) {
 			case nil:
 				value = ""
 			default:
-				fmt.Printf("unexpected type %T", value)
+				errMsg := fmt.Sprintf("unexpected type %T", value)
+				return nil, errors.New(errMsg)
 			}
 			row[columns[i]] = value
 		}
@@ -79,12 +80,12 @@ func (d *DBQuery) Fetch(rows *sql.Rows) ([]map[string]string, error) {
 	return list, nil
 }
 
-func (d *DBQuery) Exec(query string, values ...interface{}) (int64, error) {
+func (d *DB) Exec(querySql string, values ...interface{}) (int64, error) {
 	err := d.Open()
 	if err != nil {
 		return 0, err
 	}
-	stmt, err := d.db.Prepare(query)
+	stmt, err := d.db.Prepare(querySql)
 	if err != nil {
 		return 0, err
 	}
